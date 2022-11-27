@@ -2,7 +2,6 @@ package mutation
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -17,7 +16,9 @@ const (
 )
 
 const (
-	LoginServerAnnotation string = "tailscale-sidecar/login-server"
+	LoginServerAnnotation     string = "tailscale-sidecar/login-server"
+	SecretNameAnnotation      string = "tailscale-sidecar/sercret-name"
+	EnableUserspaceAnnotation string = "tailscale-sidecar/enable-userspace"
 )
 
 // TODO: provide via flags / config
@@ -50,14 +51,14 @@ func (si sidecarInjector) buildConfig(pod corev1.Pod) (*config, error) {
 	c := &config{}
 
 	// get the name of the secret containing the pre-auth-key
-	secretName := os.Getenv(SecretNameKey)
-	if secretName == "" {
+	if v, ok := pod.Annotations[SecretNameAnnotation]; ok {
+		c.secretName = v
+	} else {
 		return nil, ErrSecretNameNotProvided
 	}
 
 	// enable or disable userspace mode
-	userspaceEnabled := os.Getenv(UserspaceKey)
-	if userspaceEnabled != "" {
+	if _, ok := pod.Annotations[EnableUserspaceAnnotation]; ok {
 		c.userspace = true
 	}
 
