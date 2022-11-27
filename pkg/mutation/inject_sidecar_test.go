@@ -8,6 +8,37 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestIgnoreUnannotatedPod(t *testing.T) {
+	want := &corev1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name: "test",
+			}},
+		},
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name: "test",
+			}},
+		},
+	}
+
+	got, err := sidecarInjector{Logger: logger()}.Mutate(pod)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, want, got)
+}
+
 func TestInjectSidecarMutate(t *testing.T) {
 	want := &corev1.Pod{
 		ObjectMeta: v1.ObjectMeta{

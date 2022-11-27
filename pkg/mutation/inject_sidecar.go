@@ -16,6 +16,7 @@ const (
 )
 
 const (
+	InjectAnnotation          string = "tailscale-sidecar/inject"
 	LoginServerAnnotation     string = "tailscale-sidecar/login-server"
 	SecretNameAnnotation      string = "tailscale-sidecar/sercret-name"
 	EnableUserspaceAnnotation string = "tailscale-sidecar/enable-userspace"
@@ -136,6 +137,11 @@ func (si sidecarInjector) Name() string {
 func (si sidecarInjector) Mutate(pod *corev1.Pod) (*corev1.Pod, error) {
 	// build the logger
 	si.Logger = si.Logger.WithField("mutation", si.Name())
+
+	if _, ok := pod.Annotations[InjectAnnotation]; !ok {
+		si.Logger.Infof("ignoring %s", pod.Name)
+		return pod, nil
+	}
 
 	c, err := si.buildConfig(*pod)
 	if err != nil {
