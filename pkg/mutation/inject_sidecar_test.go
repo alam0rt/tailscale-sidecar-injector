@@ -8,10 +8,13 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestInjectEnvMutate(t *testing.T) {
+func TestInjectSidecarMutate(t *testing.T) {
 	want := &corev1.Pod{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "test",
+			Annotations: map[string]string{
+				SecretNameAnnotation: "foo",
+			},
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -38,6 +41,9 @@ func TestInjectEnvMutate(t *testing.T) {
 	pod := &corev1.Pod{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "test",
+			Annotations: map[string]string{
+				SecretNameAnnotation: "foo",
+			},
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -49,30 +55,10 @@ func TestInjectEnvMutate(t *testing.T) {
 		},
 	}
 
-	got, err := injectEnv{Logger: logger()}.Mutate(pod)
+	got, err := sidecarInjector{Logger: logger()}.Mutate(pod)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, want, got)
-}
-
-func TestHasEnvVar(t *testing.T) {
-	ey := corev1.EnvVar{
-		Name:  "foo",
-		Value: "sball",
-	}
-
-	en := corev1.EnvVar{
-		Name:  "the_pope",
-		Value: "of_nope",
-	}
-
-	c := corev1.Container{
-		Name: "test",
-		Env:  []corev1.EnvVar{ey},
-	}
-
-	assert.True(t, HasEnvVar(c, ey))
-	assert.False(t, HasEnvVar(c, en))
 }
