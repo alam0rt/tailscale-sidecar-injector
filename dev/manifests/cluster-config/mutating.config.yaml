@@ -1,9 +1,9 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: "simple-kubernetes-webhook.acme.com"
+  name: "tailscale-sidecar-injector-webhook.acme.com"
 webhooks:
-  - name: "simple-kubernetes-webhook.acme.com"
+  - name: "tailscale-sidecar-injector-webhook.acme.com"
     namespaceSelector:
       matchLabels:
         admission-webhook: enabled
@@ -15,8 +15,8 @@ webhooks:
         scope: "*"
     clientConfig:
       service:
-        namespace: default
-        name: simple-kubernetes-webhook
+        namespace: test
+        name: tailscale-sidecar-injector-webhook
         path: /mutate-pods
         port: 443
       caBundle: |

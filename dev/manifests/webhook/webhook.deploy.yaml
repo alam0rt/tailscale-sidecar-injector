@@ -2,27 +2,27 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: simple-kubernetes-webhook
-  name: simple-kubernetes-webhook
-  namespace: default
+    app: tailscale-sidecar-injector
+  name: tailscale-sidecar-injector
+  namespace: test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: simple-kubernetes-webhook
+      app: tailscale-sidecar-injector
   template:
     metadata:
       labels:
-        app: simple-kubernetes-webhook
+        app: tailscale-sidecar-injector
     spec:
       tolerations:
-        - key: acme.com/lifespan-remaining
+        - key: tailscale-sidecar-injector
           operator: Exists
           effect: NoSchedule
       containers:
-        - image: simple-kubernetes-webhook:latest
-          imagePullPolicy: Never
-          name: simple-kubernetes-webhook
+        - image: samlockart/tailscale-sidecar-injector:latest
+          imagePullPolicy: Always
+          name: injector
           env:
             - name: TLS
               value: "true"
@@ -37,4 +37,4 @@ spec:
       volumes:
         - name: tls
           secret:
-            secretName: simple-kubernetes-webhook-tls
+            secretName: tailscale-sidecar-injector-tls

@@ -4,8 +4,9 @@ metadata:
   annotations:
     tailscale-sidecar/login-server: "foo.com"
     tailscale-sidecar/secret-name: "tailscale-auth"
+    tailscale-sidecar/inject: "true"
   name: lifespan-seven
-  namespace: apps
+  namespace: test
 spec:
   containers:
     - args:
