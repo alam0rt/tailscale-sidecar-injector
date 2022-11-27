@@ -2,34 +2,12 @@ package mutation
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 )
-
-// sidecarInjector implements the pod mutator interface
-type sidecarInjector struct {
-	Logger logrus.FieldLogger
-}
-
-type SidecarConfig struct {
-	tsExtraArgs []string // TS_EXTRA_ARGS
-	userspace   bool     // TS_USERSPACE
-	preAuthKey  string   // TS_AUTH_KEY
-	secretName  string   // TS_KUBE_SECRET
-}
-
-func buildSidecarConfig(pod *corev1.Pod) (*SidecarConfig, error) {
-	loginServer := loginServer(pod)
-	c := &SidecarConfig{}
-
-	// configure with login server if annotation is present
-	if loginServer != "" {
-		c.tsExtraArgs = append(c.tsExtraArgs, loginServer)
-	}
-
-}
 
 const (
 	SecretNameKey string = "TS_KUBE_SECRET"
@@ -39,7 +17,7 @@ const (
 )
 
 const (
-	LoginServerAnnotation string = "samlockart.io/login-server"
+	LoginServerAnnotation string = "tailscale-sidecar/login-server"
 )
 
 // TODO: provide via flags / config
@@ -47,27 +25,84 @@ const (
 	SecretName string = "tailscale-auth"
 )
 
-func loginServer(pod *corev1.Pod) string {
-	const flag string = "--login-server=%s"
+// sidecarInjector implements the pod mutator interface
+type sidecarInjector struct {
+	Logger logrus.FieldLogger
+}
 
-	if pod == nil {
-		return ""
+type config struct {
+	userspace   bool   // TS_USERSPACE
+	preAuthKey  string // TS_AUTH_KEY
+	secretName  string // TS_KUBE_SECRET
+	loginServer string
+}
+
+func (c *config) LoginServer() string {
+	return c.loginServer
+}
+
+var (
+	ErrSecretNameNotProvided error = fmt.Errorf("%s missing: a secret containing the tailscale pre-auth-key must be provided", SecretNameKey)
+	ErrSidecarNil            error = fmt.Errorf("provided sidecar was empty")
+)
+
+func (si sidecarInjector) buildConfig(pod corev1.Pod) (*config, error) {
+	c := &config{}
+
+	// get the name of the secret containing the pre-auth-key
+	secretName := os.Getenv(SecretNameKey)
+	if secretName == "" {
+		return nil, ErrSecretNameNotProvided
 	}
 
+	// enable or disable userspace mode
+	userspaceEnabled := os.Getenv(UserspaceKey)
+	if userspaceEnabled != "" {
+		c.userspace = true
+	}
+
+	// configure with login server if annotation is present
 	if v, ok := pod.Annotations[LoginServerAnnotation]; ok {
-		return fmt.Sprintf(flag, v)
-
+		c.loginServer = v
 	}
-	return ""
+
+	return c, nil
 }
 
-func injectSidecar(pod *corev1.Pod) error {
-	current := pod.Spec.DeepCopy().Containers
-	pod.Spec.Containers = nil
-	pod.Spec.Containers = []corev1.Container{}
+func (c *config) TSExtraArgs() []string {
+	var args []string
+
+	if c.loginServer != "" {
+		args = append(args, fmt.Sprintf("--login-server=%s", c.loginServer))
+	}
+
+	return args
 }
 
-func buildSidecarContainer(config *SidecarConfig) (*corev1.Container, error) {
+func (c *config) TSKubeSecret() string {
+	return c.secretName
+}
+
+func (c *config) TSAuthKey() string {
+	return c.preAuthKey
+}
+
+func (c *config) TSUserspace() string {
+	if c.userspace {
+		return "true"
+	}
+	return "false"
+}
+
+func injectSidecar(pod *corev1.Pod, sidecar *corev1.Container) error {
+	if sidecar == nil {
+		return ErrSidecarNil
+	}
+	pod.Spec.Containers = append([]corev1.Container{*sidecar}, pod.Spec.Containers...)
+	return nil
+}
+
+func buildSidecarContainer(config *config) (*corev1.Container, error) {
 	return &corev1.Container{
 		Name:            "tailscale-sidecar",
 		Image:           "ghcr.io/tailscale/tailscale:latest",
@@ -78,15 +113,15 @@ func buildSidecarContainer(config *SidecarConfig) (*corev1.Container, error) {
 			},
 		},
 		Env: []corev1.EnvVar{
-			{Name: SecretNameKey, Value: SecretName},
-			{Name: UserspaceKey, Value: "false"},
-			{Name: TSExtraArgs, Value: strings.Join([]string{loginServer}, " ")},
+			{Name: SecretNameKey, Value: config.TSKubeSecret()},
+			{Name: UserspaceKey, Value: config.TSUserspace()},
+			{Name: TSExtraArgs, Value: strings.Join(config.TSExtraArgs(), " ")},
 			{
 				Name: PreAuthKeyKey,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						Key:                  "TS_AUTH_KEY",
-						LocalObjectReference: corev1.LocalObjectReference{Name: SecretName},
+						LocalObjectReference: corev1.LocalObjectReference{Name: config.TSKubeSecret()},
 						Optional:             &[]bool{false}[0],
 					},
 				},
@@ -103,8 +138,22 @@ func (si sidecarInjector) Name() string {
 }
 
 func (si sidecarInjector) Mutate(pod *corev1.Pod) (*corev1.Pod, error) {
+	// build the logger
 	si.Logger = si.Logger.WithField("mutation", si.Name())
-	mpod := pod.DeepCopy()
 
-	return nil, nil
+	c, err := si.buildConfig(*pod)
+	if err != nil {
+		return nil, err
+	}
+
+	sc, err := buildSidecarContainer(c)
+	if err != nil {
+		return nil, err
+	}
+
+	// inject the sidecar
+	mpod := pod.DeepCopy()
+	injectSidecar(mpod, sc)
+
+	return mpod, nil
 }
