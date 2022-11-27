@@ -21,11 +21,6 @@ const (
 	EnableUserspaceAnnotation string = "tailscale-sidecar/enable-userspace"
 )
 
-// TODO: provide via flags / config
-const (
-	SecretName string = "tailscale-auth"
-)
-
 // sidecarInjector implements the pod mutator interface
 type sidecarInjector struct {
 	Logger logrus.FieldLogger

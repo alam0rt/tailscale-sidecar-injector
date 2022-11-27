@@ -1,8 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  labels:
-    acme.com/lifespan-requested: "7"
+  annotations:
+    tailscale-sidecar/login-server: "foo.com"
+    tailscale-sidecar/secret-name: "tailscale-auth"
   name: lifespan-seven
   namespace: apps
 spec:
