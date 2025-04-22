@@ -2,25 +2,25 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: tailscale-sidecar-injector
-  name: tailscale-sidecar-injector
+    app: tailscale-sidecar-webhook
+  name: tailscale-sidecar-webhook
   namespace: test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tailscale-sidecar-injector
+      app: tailscale-sidecar-webhook
   template:
     metadata:
       labels:
-        app: tailscale-sidecar-injector
+        app: tailscale-sidecar-webhook
     spec:
       tolerations:
-        - key: tailscale-sidecar-injector
+        - key: tailscale-sidecar-webhook
           operator: Exists
           effect: NoSchedule
       containers:
-        - image: samlockart/tailscale-sidecar-injector:latest
+        - image: samlockart/tailscale-sidecar-webhook:latest
           imagePullPolicy: Always
           name: injector
           env:
@@ -37,4 +37,4 @@ spec:
       volumes:
         - name: tls
           secret:
-            secretName: tailscale-sidecar-injector-tls
+            secretName: tailscale-sidecar-webhook-tls

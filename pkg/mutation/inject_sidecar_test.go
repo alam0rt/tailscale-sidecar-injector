@@ -3,6 +3,7 @@ package mutation
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,8 @@ func TestIgnoreUnannotatedPod(t *testing.T) {
 		},
 	}
 
-	got, err := sidecarInjector{Logger: logger()}.Mutate(pod)
+	logger := logrus.New().WithField("test", t.Name())
+	got, err := sidecarInjector{Logger: logger}.Mutate(pod)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,56 +42,25 @@ func TestIgnoreUnannotatedPod(t *testing.T) {
 }
 
 func TestInjectSidecarMutate(t *testing.T) {
-	want := &corev1.Pod{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "test",
-			Annotations: map[string]string{
-				SecretNameAnnotation: "foo",
-			},
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{
-				Name: "test",
-				Env: []corev1.EnvVar{
-					{
-						Name:  "KUBE",
-						Value: "true",
-					},
-				},
-			}},
-			InitContainers: []corev1.Container{{
-				Name: "inittest",
-				Env: []corev1.EnvVar{
-					{
-						Name:  "KUBE",
-						Value: "true",
-					},
-				},
-			}},
+	tests := map[string]struct {
+		got  *corev1.Pod
+		want *corev1.Pod
+	}{
+		"doesnt inject": {
+			&corev1.Pod{},
+			&corev1.Pod{},
 		},
 	}
 
-	pod := &corev1.Pod{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "test",
-			Annotations: map[string]string{
-				SecretNameAnnotation: "foo",
-			},
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{
-				Name: "test",
-			}},
-			InitContainers: []corev1.Container{{
-				Name: "inittest",
-			}},
-		},
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			logger := logrus.New()
+			logger.WithField("test", t.Name())
+			want := test.want.DeepCopy()
+			got, err := sidecarInjector{Logger: logger}.Mutate(test.got.DeepCopy())
+			assert.NoError(t, err)
+			assert.Equal(t, want, got)
+		})
 	}
-
-	got, err := sidecarInjector{Logger: logger()}.Mutate(pod)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, want, got)
 }
