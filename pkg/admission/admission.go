@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/alam0rt/tailscale-sidecar-injector/pkg/mutation"
+	"github.com/alam0rt/tailscale-sidecar-injector/pkg/validation"
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/simple-kubernetes-webhook/pkg/mutation"
-	"github.com/slackhq/simple-kubernetes-webhook/pkg/validation"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

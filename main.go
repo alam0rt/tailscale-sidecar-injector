@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/alam0rt/tailscale-sidecar-injector/pkg/admission"
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/simple-kubernetes-webhook/pkg/admission"
 	admissionv1 "k8s.io/api/admission/v1"
 )
 

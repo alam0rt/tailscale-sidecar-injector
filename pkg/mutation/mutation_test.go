@@ -1,7 +1,7 @@
 package mutation
 
 import (
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -78,6 +78,6 @@ func patch() string {
 
 func logger() *logrus.Entry {
 	mute := logrus.StandardLogger()
-	mute.Out = ioutil.Discard
+	mute.Out = io.Discard
 	return mute.WithField("logger", "test")
 }
