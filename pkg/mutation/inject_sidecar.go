@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -16,10 +17,10 @@ const (
 )
 
 const (
-	InjectAnnotation          string = "tailscale-sidecar/inject"
-	LoginServerAnnotation     string = "tailscale-sidecar/login-server"
-	SecretNameAnnotation      string = "tailscale-sidecar/sercret-name"
-	EnableUserspaceAnnotation string = "tailscale-sidecar/enable-userspace"
+	InjectAnnotation          string = "iced.cool/tailscale/inject"
+	LoginServerAnnotation     string = "iced.cool/tailscale/login-server"
+	SecretNameAnnotation      string = "iced.cool/tailscale/sercret-name"
+	EnableUserspaceAnnotation string = "iced.cool/tailscale/enable-userspace"
 )
 
 // sidecarInjector implements the pod mutator interface
@@ -95,15 +96,16 @@ func injectSidecar(pod *corev1.Pod, sidecar *corev1.Container) error {
 	if sidecar == nil {
 		return ErrSidecarNil
 	}
-	pod.Spec.Containers = append([]corev1.Container{*sidecar}, pod.Spec.Containers...)
+	pod.Spec.InitContainers = append([]corev1.Container{*sidecar}, pod.Spec.Containers...)
 	return nil
 }
 
 func buildSidecarContainer(config *config) (*corev1.Container, error) {
 	return &corev1.Container{
-		Name:            "tailscale-sidecar",
+		Name:            "tailscale",
 		Image:           "ghcr.io/tailscale/tailscale:latest",
-		ImagePullPolicy: "Always",
+		ImagePullPolicy: corev1.PullAlways,
+		RestartPolicy:   ptr.To(corev1.ContainerRestartPolicyAlways),
 		SecurityContext: &corev1.SecurityContext{
 			Capabilities: &corev1.Capabilities{
 				Add: []corev1.Capability{"NET_ADMIN"},
@@ -117,9 +119,9 @@ func buildSidecarContainer(config *config) (*corev1.Container, error) {
 				Name: PreAuthKeyKey,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
-						Key:                  "TS_AUTH_KEY",
+						Key:                  PreAuthKeyKey,
 						LocalObjectReference: corev1.LocalObjectReference{Name: config.TSKubeSecret()},
-						Optional:             &[]bool{false}[0],
+						Optional:             ptr.To(false),
 					},
 				},
 			},
