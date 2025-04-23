@@ -3,4 +3,4 @@ kind: Kustomization
 resources:
 - webhook.deploy.yaml
 - webhook.svc.yaml
-- webhook.secret.yaml
+# - webhook.secret.yaml # FILL ME OUT
