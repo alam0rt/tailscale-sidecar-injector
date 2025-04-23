@@ -16,4 +16,4 @@ spec:
     name: selfsigned-issuer
     kind: Issuer
     group: cert-manager.io
-    namespace: test
+    namespace: tailscale-sidecar-webhook
