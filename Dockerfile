@@ -12,8 +12,7 @@ COPY . /work
 # ---
 
 # Build admission-webhook
-RUN --mount=type=cache,target=/root/.cache/go-build \
-  go build -o bin/admission-webhook .
+RUN go build -o bin/admission-webhook .
 
 
 FROM scratch AS run
