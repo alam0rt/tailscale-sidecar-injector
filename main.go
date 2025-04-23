@@ -30,6 +30,7 @@ func main() {
 		logrus.Print("Listening on port 8080...")
 		logrus.Fatal(http.ListenAndServe(":8080", nil))
 	}
+
 }
 
 // ServeHealth returns 200 when things are good

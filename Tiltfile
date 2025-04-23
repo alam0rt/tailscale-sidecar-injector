@@ -41,6 +41,7 @@ namespace_create('test')
 
 k8s_yaml(namespace_inject(kustomize('dev/manifests'),'test'))
 
+k8s_yaml(namespace_inject('dev/manifests/tests/rbac.yaml','test'))
 k8s_yaml(namespace_inject('dev/manifests/tests/inject.yaml','test'))
 
 

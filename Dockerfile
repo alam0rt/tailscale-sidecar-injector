@@ -9,11 +9,13 @@ ENV CGO_ENABLED=0
 WORKDIR /work
 COPY . /work
 
+# ---
+
 # Build admission-webhook
 RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o bin/admission-webhook .
 
-# ---
+
 FROM scratch AS run
 
 COPY --from=build /work/bin/admission-webhook /usr/local/bin/

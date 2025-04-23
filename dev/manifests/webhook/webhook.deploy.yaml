@@ -4,7 +4,6 @@ metadata:
   labels:
     app: tailscale-sidecar-webhook
   name: tailscale-sidecar-webhook
-  namespace: test
 spec:
   replicas: 1
   selector:
@@ -30,6 +29,17 @@ spec:
               value: "trace"
             - name: LOG_JSON
               value: "false"
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tailscale-sidecar-webhook
+                  key: API_KEY
+                  optional: true
+            - name: LOGIN_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: tailscale-sidecar-webhook
+                  key: LOGIN_SERVER
           volumeMounts:
             - name: tls
               mountPath: "/etc/admission-webhook/tls"
