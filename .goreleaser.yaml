@@ -20,13 +20,9 @@ builds:
       - linux
 
 dockers:
-  - id: webhook
-    goos: linux
-    goarch: amd64
+  - 
     image_templates:
-    - "samlockart/tailscale-sidecar-webhook:latest"
-    - "samlockart/tailscale-sidecar-webhook:{{ .Tag }}"
-    - "samlockart/tailscale-sidecar-webhook:v{{ .Major }}"
+    - "samlockart/tailscale-sidecar-webhook"
 
 archives:
   - format: tar.gz
