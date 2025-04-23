@@ -6,7 +6,8 @@ spec:
   isCA: false
   commonName: tailscale-sidecar-webhook
   dnsNames:
-  - tailscale-sidecar-webhook.test.svc
+  # TODO: allow kustomize to template this out
+  - tailscale-sidecar-webhook.tailscale-sidecar-webhook.svc
   secretName: tailscale-sidecar-webhook-tls
   privateKey:
     algorithm: RSA
