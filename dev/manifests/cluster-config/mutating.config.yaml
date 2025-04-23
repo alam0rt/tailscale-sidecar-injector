@@ -3,7 +3,8 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: "tailscale-sidecar-webhook.iced.cool"
   annotations:
-     cert-manager.io/inject-ca-from: test/tailscale-sidecar-webhook
+  # TODO: template out with namespace etc
+     cert-manager.io/inject-ca-from: tailscale-sidecar-webhook/tailscale-sidecar-webhook
 webhooks:
   - name: "tailscale-sidecar-webhook.iced.cool"
     objectSelector:
