@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/alam0rt/tailscale-sidecar-injector/pkg/mutation"
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/simple-kubernetes-webhook/pkg/mutation"
-	"github.com/slackhq/simple-kubernetes-webhook/pkg/validation"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,29 +39,6 @@ func (a Admitter) MutatePodReview() (*admissionv1.AdmissionReview, error) {
 	}
 
 	return patchReviewResponse(a.Request.UID, patch)
-}
-
-// MutatePodReview takes an admission request and validates the pod within
-// it returns an admission review
-func (a Admitter) ValidatePodReview() (*admissionv1.AdmissionReview, error) {
-	pod, err := a.Pod()
-	if err != nil {
-		e := fmt.Sprintf("could not parse pod in admission review request: %v", err)
-		return reviewResponse(a.Request.UID, false, http.StatusBadRequest, e), err
-	}
-
-	v := validation.NewValidator(a.Logger)
-	val, err := v.ValidatePod(pod)
-	if err != nil {
-		e := fmt.Sprintf("could not validate pod: %v", err)
-		return reviewResponse(a.Request.UID, false, http.StatusBadRequest, e), err
-	}
-
-	if !val.Valid {
-		return reviewResponse(a.Request.UID, false, http.StatusForbidden, val.Reason), nil
-	}
-
-	return reviewResponse(a.Request.UID, true, http.StatusAccepted, "valid pod"), nil
 }
 
 // Pod extracts a pod from an admission request

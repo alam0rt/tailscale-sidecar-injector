@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tailscale-sidecar-webhook
+spec:
+  isCA: false
+  commonName: tailscale-sidecar-webhook
+  dnsNames:
+  - tailscale-sidecar-webhook.test.svc
+  secretName: tailscale-sidecar-webhook-tls
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  issuerRef:
+    name: selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+    namespace: test

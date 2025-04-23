@@ -2,25 +2,24 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: tailscale-sidecar-injector
-  name: tailscale-sidecar-injector
-  namespace: test
+    app: tailscale-sidecar-webhook
+  name: tailscale-sidecar-webhook
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tailscale-sidecar-injector
+      app: tailscale-sidecar-webhook
   template:
     metadata:
       labels:
-        app: tailscale-sidecar-injector
+        app: tailscale-sidecar-webhook
     spec:
       tolerations:
-        - key: tailscale-sidecar-injector
+        - key: tailscale-sidecar-webhook
           operator: Exists
           effect: NoSchedule
       containers:
-        - image: samlockart/tailscale-sidecar-injector:latest
+        - image: samlockart/tailscale-sidecar-webhook:latest
           imagePullPolicy: Always
           name: injector
           env:
@@ -30,6 +29,17 @@ spec:
               value: "trace"
             - name: LOG_JSON
               value: "false"
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tailscale-sidecar-webhook
+                  key: API_KEY
+                  optional: true
+            - name: LOGIN_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: tailscale-sidecar-webhook
+                  key: LOGIN_SERVER
           volumeMounts:
             - name: tls
               mountPath: "/etc/admission-webhook/tls"
@@ -37,4 +47,4 @@ spec:
       volumes:
         - name: tls
           secret:
-            secretName: tailscale-sidecar-injector-tls
+            secretName: tailscale-sidecar-webhook-tls
