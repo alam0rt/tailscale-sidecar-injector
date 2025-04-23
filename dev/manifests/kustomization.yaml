@@ -4,4 +4,4 @@ resources:
 - cluster-config
 - webhook
 - pki
-namespace: test
+namespace: tailscale-sidecar-webhook
